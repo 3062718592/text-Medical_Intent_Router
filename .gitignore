@@ -1,0 +1,42 @@
+# ---- 模型权重：绝对不提交（GitHub 单文件上限 100MB）----
+pretrain_models/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+
+# ---- 训练产物：只保留小的 json 日志，权重大目录整体忽略 ----
+outputs/full_ft_ckpt/
+outputs/*_ckpt/
+outputs/lora_adapter/*.safetensors
+
+# ---- 逐条预测文件：含 416 条真实医疗提问原文，默认不公开 ----
+# 需要时本地重跑脚本即可再生成
+outputs/*_pred.json
+
+# ---- 原始数据：来源授权未定，不随仓库分发 ----
+data/raw/
+data/test.json
+*.zip
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 本地环境变量（含 API Key，绝不能提交）----
+.env
+.env.*

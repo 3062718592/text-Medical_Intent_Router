@@ -1,0 +1,70 @@
+{
+  "model": "bert-cls-v1",
+  "temperature": 1.65,
+  "n_calib": 416,
+  "nll": 1.4017,
+  "ece_raw": 0.2206,
+  "ece_calibrated": 0.1271,
+  "max_length": 96,
+  "pool": "cls",
+  "seed": 42,
+  "risk_coverage": [
+    {
+      "threshold": 0.4,
+      "coverage": 0.7428,
+      "precision": 0.5081
+    },
+    {
+      "threshold": 0.45,
+      "coverage": 0.6274,
+      "precision": 0.5326
+    },
+    {
+      "threshold": 0.5,
+      "coverage": 0.5144,
+      "precision": 0.5888
+    },
+    {
+      "threshold": 0.55,
+      "coverage": 0.4038,
+      "precision": 0.5833
+    },
+    {
+      "threshold": 0.6,
+      "coverage": 0.3221,
+      "precision": 0.5522
+    },
+    {
+      "threshold": 0.65,
+      "coverage": 0.2452,
+      "precision": 0.6078
+    },
+    {
+      "threshold": 0.7,
+      "coverage": 0.1779,
+      "precision": 0.6892
+    },
+    {
+      "threshold": 0.75,
+      "coverage": 0.1298,
+      "precision": 0.7407
+    },
+    {
+      "threshold": 0.8,
+      "coverage": 0.0938,
+      "precision": 0.7949
+    },
+    {
+      "threshold": 0.85,
+      "coverage": 0.0553,
+      "precision": 0.8261
+    },
+    {
+      "threshold": 0.9,
+      "coverage": 0.0168,
+      "precision": 0.8571
+    }
+  ],
+  "recommended_threshold": null,
+  "note": "T 与阈值都在 val(416) 上拟合/标定，val 同时用于评测，指标略偏乐观"
+}

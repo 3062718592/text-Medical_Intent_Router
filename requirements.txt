@@ -1,0 +1,15 @@
+# 核心依赖（规则 / TF-IDF / BERT 三路只需要这些）
+numpy>=1.24
+scikit-learn>=1.3
+torch>=2.2
+transformers>=4.45
+
+# 仅 LoRA / 全量微调（llm_lora/）需要
+peft>=0.11
+
+# 仅 API 零样本（llm_api_zero_shot/）需要，走 OpenAI 兼容接口
+openai>=1.30
+
+# 说明：
+#   规则（rule/）与 evaluator（eval/）只用标准库 + numpy/sklearn。
+#   没有 GPU 也能跑第 1、2 档快速开始，见 README。
