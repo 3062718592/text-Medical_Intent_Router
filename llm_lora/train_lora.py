@@ -88,6 +88,12 @@ def collate(batch, pad_id):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--num_train", type=int, default=0, help="0=全部训练样本")
+    ap.add_argument("--data", default="train.json",
+                    help="训练集文件名：train.json（原始 1667）或 train_aug.json（回译增强）；验证集恒为 val.json")
+    ap.add_argument("--tag", default="",
+                    help="产物后缀，如 aug → lora_adapter_aug / lora_train_log_aug.json，避免覆盖基线")
+    ap.add_argument("--save_best", action="store_true",
+                    help="每个 epoch 结束时若 val_loss 创新低就额外存一份 <产物>_best；配合早停使用")
     ap.add_argument("--epochs", type=int, default=4)
     ap.add_argument("--batch_size", type=int, default=4, help="全量微调建议 1~2")
     ap.add_argument("--grad_accum", type=int, default=4)
@@ -112,7 +118,7 @@ def main():
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
 
-    train, val = load_splits()
+    train, val = load_splits(args.data)
     if args.num_train:
         train = train[: args.num_train]
     val = val[: min(args.val_n, len(val))]   # 训练中只看 val_loss，条数够用就行、省时间
@@ -159,6 +165,7 @@ def main():
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr)
     # bf16 不需要 GradScaler（它的动态范围与 fp32 同量级，不存在 fp16 的下溢问题）
     log, step = [], 0
+    best_vloss, best_epoch = None, 0
     t_start = time.time()
 
     for epoch in range(1, args.epochs + 1):
@@ -192,18 +199,33 @@ def main():
                     "peak_mem_gb": round(torch.cuda.max_memory_allocated() / 1024**3, 2) if device == "cuda" else None})
         print(f"epoch {epoch}: train_loss={log[-1]['train_loss']} val_loss={log[-1]['val_loss']} "
               f"steps={step} {log[-1]['elapsed_s']}s mem={log[-1]['peak_mem_gb']}GB", flush=True)
+
+        # best-ckpt：val_loss 创新低就存一份，训练结束再从里面挑。
+        # 为什么需要：本数据上 LoRA 到 epoch 3~4 就开始过拟合（val_loss 回升），
+        # 而只存最后一轮等于把最差的那个交出去 —— 白跑几十分钟。
+        if args.save_best and (best_vloss is None or log[-1]["val_loss"] < best_vloss):
+            best_vloss, best_epoch = log[-1]["val_loss"], epoch
+            _tag = ("_" + args.tag) if args.tag else ""
+            _best_dir = OUT_DIR / (("full_ft_ckpt" if args.full_ft else "lora_adapter") + _tag + "_best")
+            model.save_pretrained(str(_best_dir))
+            print(f"  [best] epoch {epoch} val_loss={best_vloss} → {_best_dir.name}", flush=True)
+
         if args.max_steps:
             break
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    # tag 用于区分不同数据/超参下的产物，避免覆盖基线：
+    #   基线（1667 条）    → outputs/lora_adapter             + lora_train_log.json
+    #   增强（3196 条）    → outputs/lora_adapter_aug         + lora_train_log_aug.json
+    tag = ("_" + args.tag) if args.tag else ""
     if args.full_ft:
-        model.save_pretrained(str(OUT_DIR / "full_ft_ckpt"))
-        log_path = OUT_DIR / "full_ft_train_log.json"
-        print(f"全量权重 → {OUT_DIR / 'full_ft_ckpt'}")
+        model.save_pretrained(str(OUT_DIR / ("full_ft_ckpt" + tag)))
+        log_path = OUT_DIR / ("full_ft_train_log%s.json" % tag)
+        print(f"全量权重 → {OUT_DIR / ('full_ft_ckpt' + tag)}")
     else:
-        model.save_pretrained(str(OUT_DIR / "lora_adapter"))   # 只存 adapter，十几 MB
-        log_path = OUT_DIR / "lora_train_log.json"
-        print(f"adapter → {OUT_DIR / 'lora_adapter'}")
+        model.save_pretrained(str(OUT_DIR / ("lora_adapter" + tag)))   # 只存 adapter，十几 MB
+        log_path = OUT_DIR / ("lora_train_log%s.json" % tag)
+        print(f"adapter → {OUT_DIR / ('lora_adapter' + tag)}")
     log_path.write_text(json.dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
