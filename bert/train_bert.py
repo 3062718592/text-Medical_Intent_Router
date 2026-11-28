@@ -164,8 +164,6 @@ def evaluate(model, loader, device):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default="cls", choices=["cls", "mean", "max"])
-    ap.add_argument("--data", default="train.json",
-                    help="训练集文件名：train.json（原始 1667）或 train_aug.json（回译增强）；验证集恒为 val.json")
     ap.add_argument("--epochs", type=int, default=8)
     ap.add_argument("--batch_size", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-5, help="BERT 层学习率，越小越保守")
@@ -187,7 +185,7 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = AutoTokenizer.from_pretrained(str(bert_path()))
-    train, val = load_splits(args.data)
+    train, val = load_splits()
     if args.max_eval:
         val = val[: args.max_eval]
 

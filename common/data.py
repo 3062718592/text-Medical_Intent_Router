@@ -26,14 +26,9 @@ def _load(name: str):
         return json.load(f)
 
 
-def load_splits(train_file: str = "train.json"):
-    """返回 (train, val)，每条是 {"idx", "sentence", "label"}
-
-    train_file 可换成 "train_aug.json"（回译增强版）。验证集永远是 val.json ——
-    增强样本只进训练集，混进验证集会让所有方法的对比数字失效。
-    默认值保持 "train.json"，所以老脚本和已发布的基线数字不受影响。
-    """
-    return _load(train_file), _load("val.json")
+def load_splits():
+    """返回 (train, val)，每条是 {"idx", "sentence", "label"}"""
+    return _load("train.json"), _load("val.json")
 
 
 def clean_val(train=None, val=None):
